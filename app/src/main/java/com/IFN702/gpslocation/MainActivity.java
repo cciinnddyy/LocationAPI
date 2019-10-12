@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 
+import android.os.AsyncTask;
 import android.widget.Toast;
 
 import android.Manifest;
@@ -24,15 +25,20 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
+import com.IFN702.gpslocation.mqttclient;
+
 import java.util.ArrayList;
+import java.util.TimerTask;
 
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, LocationListener
 , OnConnectionFailedListener
 {
+    private static MainActivity context;
     private GoogleApiClient googleApiClient;
     private Location location;
     private LocationRequest locationRequest;
+
 
 
     private TextView txtlocation;
@@ -52,10 +58,19 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     //update location settings
     private static final int INTERVEL = 5000, FASTEST_INTERVAL = 5000;
 
+    public static MainActivity getContext(){
+
+        return context;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        context = this;
+
+
         txtlocation = findViewById(R.id.txtlocation);
         //Check for the permission despite the declaration in build.gradle already exist
         //Because they are the supreme permission
@@ -166,9 +181,17 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
             if (location != null) {
                 txtlocation.setText("Latitude : " + location.getLatitude() + "\nLongitude : " + location.getLongitude());
+
+                //Mqtt client connection
+
+
+
             }
 
             startLocationUpdates();
+        String latitude = String.valueOf(location.getLatitude());
+
+        mclient.execute(latitude, String.valueOf(location.getLongitude()));
     }
 
 
@@ -187,6 +210,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             }
 
             LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
+
         }
 
     @Override
@@ -199,12 +223,26 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     }
 
+    mqttclient mclient = new mqttclient();
+
+    public static String locations ;
+
+    public String getLontitudeL(double lontitude, double lantitude){
+        String location = String.valueOf(lontitude)+ "," + String.valueOf(lantitude);
+        return location;
+    }
+
     @Override
     public void onLocationChanged(Location location) {
         if(location!=null){
             txtlocation.setText("Latitude : " + location.getLatitude() + "\nLongitude : " + location.getLongitude());
+
+            locations = getLontitudeL(location.getLongitude(),location.getLatitude());
+
         }
     }
+
+
 
 
 
